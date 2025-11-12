@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mcp-server-atlassian"
+version = "0.5.0"
+description = "Model Context Protocol server providing comprehensive access to Atlassian Jira and Confluence Cloud APIs"
+readme = "README.md"
+license = {file = "LICENSE.md"}
+requires-python = ">=3.13"
+dependencies = [
+    "atlassian-python-api>=4.0.7",
+]
+
+[project.scripts]
+mcp-server-atlassian = "mcp_server_atlassian:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pytest-asyncio",
+    "coverage",
+    "ruff",
+    "mypy",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=src/mcp_server_atlassian",
+    "--cov-report=term-missing",
+]
+
+[tool.ruff]
+src = ["src"]
+target-version = "py313"
+line-length = 120
+
+[tool.mypy]
+python_version = "3.13"
+packages = ["src/mcp_server_atlassian"]
+strict = true
+
+[dependency-groups]
+dev = [
+    "mypy>=1.18.2",
+]
