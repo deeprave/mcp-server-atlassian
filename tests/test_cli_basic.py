@@ -1,45 +1,50 @@
 """Test basic CLI functionality."""
-import subprocess
-import sys
+
+import pytest
+import typer
+from unittest.mock import patch
 
 
-def test_module_can_be_executed():
-    """Test that the module can be executed with --help."""
-    result = subprocess.run(
-        [sys.executable, "-m", "mcp_server_atlassian", "--help"],
-        capture_output=True,
-        text=True,
-        timeout=10
-    )
-    assert result.returncode == 0
-    assert "help" in result.stdout.lower() or "usage" in result.stdout.lower()
+def test_version_callback_shows_version():
+    """Test version callback displays version and exits."""
+    from mcp_server_atlassian.cli import version_callback
+    from mcp_server_atlassian import __version__
+
+    with patch("typer.echo") as mock_echo:
+        with pytest.raises(typer.Exit):
+            version_callback(True)
+
+        mock_echo.assert_called_once_with(f"MCP Server Atlassian {__version__}")
 
 
-def test_module_shows_version():
-    """Test that the module can show version information."""
-    result = subprocess.run(
-        [sys.executable, "-m", "mcp_server_atlassian", "--version"],
-        capture_output=True,
-        text=True,
-        timeout=10
-    )
-    # Should either succeed with version or fail gracefully
-    assert result.returncode in [0, 2]  # 0 for success, 2 for missing option
+def test_version_callback_no_action_when_false():
+    """Test version callback does nothing when value is False."""
+    from mcp_server_atlassian.cli import version_callback
+
+    # Should not raise or call anything
+    result = version_callback(False)
+    assert result is None
 
 
-def test_typer_cli_integration():
-    """Test that CLI uses Typer and shows proper help."""
-    result = subprocess.run(
-        [sys.executable, "-m", "mcp_server_atlassian", "--help"],
-        capture_output=True,
-        text=True,
-        timeout=10
-    )
-    assert result.returncode == 0
-    # Typer should show structured help with specific formatting
-    stdout_lower = result.stdout.lower()
-    assert "usage:" in stdout_lower
-    assert "options" in stdout_lower  # Typer shows "Options" section
-    # Typer includes --help and --version by default
-    assert "--help" in stdout_lower
-    assert "--version" in stdout_lower
+def test_main_callback_function():
+    """Test main callback function exists and is callable."""
+    from mcp_server_atlassian.cli import main
+
+    # Should not raise when called with default args
+    result = main()
+    assert result is None
+
+
+def test_get_config_function():
+    """Test get_config function returns AtlassianConfig."""
+    from mcp_server_atlassian.cli import get_config
+    from mcp_server_atlassian.config import AtlassianConfig
+
+    with patch.object(AtlassianConfig, "from_environment") as mock_from_env:
+        mock_config = AtlassianConfig(url="https://test.atlassian.net")
+        mock_from_env.return_value = mock_config
+
+        result = get_config()
+
+        assert result == mock_config
+        mock_from_env.assert_called_once()

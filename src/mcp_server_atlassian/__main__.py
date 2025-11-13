@@ -1,10 +1,30 @@
 """Main entry point for MCP Server Atlassian."""
-from .cli import app
+
+import asyncio
+from .cli import get_config
+from .server import AtlassianMCPServer
 
 
-def main():
+async def async_main() -> None:
+    """Async main function for server operations."""
+    # Get configuration from CLI
+    config = get_config()
+
+    # Create and configure server
+    server = AtlassianMCPServer()
+    server.config = config
+    await server.start()
+
+    # Run the FastMCP server in STDIO mode
+    await server.mcp_server.run_async(transport="stdio")
+
+    # Clean shutdown
+    await server.stop()
+
+
+def main() -> None:
     """Main CLI entry point."""
-    app()
+    asyncio.run(async_main())
 
 
 if __name__ == "__main__":
