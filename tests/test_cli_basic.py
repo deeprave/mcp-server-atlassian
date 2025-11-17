@@ -2,7 +2,7 @@
 
 import pytest
 import typer
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 
 def test_version_callback_shows_version():
@@ -30,8 +30,12 @@ def test_main_callback_function():
     """Test main callback function exists and is callable."""
     from mcp_server_atlassian.cli import main
 
-    # Should not raise when called with default args
-    result = main()
+    # Create mock context
+    mock_ctx = MagicMock()
+    mock_ctx.invoked_subcommand = "some_command"  # Simulate subcommand to avoid server start
+
+    # Should not raise when called with context
+    result = main(mock_ctx)
     assert result is None
 
 

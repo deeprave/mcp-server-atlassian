@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
-mcp-server-atlassian = "mcp_server_atlassian:main"
+mcp-server-atlassian = "mcp_server_atlassian.main:main"
 
 [project.optional-dependencies]
 dev = [
@@ -49,10 +49,14 @@ line-length = 120
 
 [tool.mypy]
 python_version = "3.13"
-packages = ["src/mcp_server_atlassian"]
+packages = ["mcp_server_atlassian"]
+mypy_path = "src"
 strict = true
 
 [dependency-groups]
 dev = [
     "mypy>=1.18.2",
+    "pytest>=9.0.1",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.0.0",
 ]

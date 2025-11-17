@@ -2,9 +2,12 @@
 
 import os
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, TYPE_CHECKING
 from urllib.parse import urlparse
 import httpx
+
+if TYPE_CHECKING:
+    from .result import Result
 
 
 @dataclass
@@ -39,6 +42,25 @@ class AtlassianConfig:
 
     cloud: bool = True
     tool_prefix: str = "atl"
+
+    @classmethod
+    def from_environment_safe(cls) -> "Result[AtlassianConfig]":
+        """Load configuration from environment variables safely without raising exceptions."""
+        from .result import Result
+
+        url = os.getenv("ATLASSIAN_URL")
+        if not url:
+            return Result.failure(error="ATLASSIAN_URL environment variable is required", error_type="config_error")
+
+        tool_prefix = os.getenv("MCP_TOOL_PREFIX", "atl")
+
+        try:
+            config = cls(url=url, tool_prefix=tool_prefix)
+            return Result.ok(config)
+        except Exception as e:
+            return Result.failure(
+                error=f"Failed to create configuration: {str(e)}", error_type="config_error", exception=e
+            )
 
     @classmethod
     def from_environment(cls) -> "AtlassianConfig":

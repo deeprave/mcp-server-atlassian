@@ -1,11 +1,11 @@
 """MCP Server implementation for Atlassian services."""
 
-from typing import List, Optional, Any, Dict
+from typing import List, Optional, Any
 from fastmcp import FastMCP
 
 from .config import AtlassianConfig
 from .auth import AtlassianAuthManager
-from .result import Result
+from .tools import register_tools
 
 
 class AtlassianMCPServer:
@@ -17,46 +17,22 @@ class AtlassianMCPServer:
         self.mcp_server = FastMCP("Atlassian MCP Server")
         self.config: Optional[AtlassianConfig] = None
         self.auth_manager: Optional[AtlassianAuthManager] = None
-        self._setup_tools()
-
-    def _setup_tools(self) -> None:
-        """Set up MCP tools."""
-
-        @self.mcp_server.tool()
-        async def health_check() -> Dict[str, Any]:
-            """Check server health."""
-            return Result.ok("Server is healthy").to_json()
-
-        @self.mcp_server.tool()
-        async def setup_atlassian_credentials(token: str) -> Dict[str, Any]:
-            """Configure Atlassian API token for authentication.
-
-            Args:
-                token: API token for Atlassian authentication
-            """
-            try:
-                # Use server's existing config - prevents URL injection
-                auth_manager = await self._get_auth_manager()
-                result = await auth_manager.setup_credentials(token=token)
-                return Result.ok(result).to_json()
-
-            except ValueError as e:
-                return Result.failure(f"Setup failed: {str(e)}", "setup_error", e).to_json()
-            except Exception as e:
-                return Result.failure(f"Unexpected error during setup: {str(e)}", "unknown_error", e).to_json()
-
-    async def _get_auth_manager(self) -> AtlassianAuthManager:
-        """Get authenticated auth manager or raise helpful exception."""
-        if not self.config:
-            self.config = AtlassianConfig.from_environment()
-
-        if not self.auth_manager:
-            self.auth_manager = AtlassianAuthManager(self.config)
-
-        return self.auth_manager
 
     async def start(self) -> None:
         """Start the MCP server."""
+        # Register tools with configuration (or default config if None)
+        if self.config:
+            await register_tools(self.mcp_server, self.config)
+        else:
+            # Use default config for tool registration when config is missing
+            from .config import AtlassianConfig
+
+            default_config = AtlassianConfig(url="https://example.atlassian.net")
+            await register_tools(self.mcp_server, default_config)
+
+        # Store reference to this server instance for error checking
+        self.mcp_server._atlassian_server = self  # type: ignore
+
         self._running = True
 
     async def stop(self) -> None:
@@ -71,3 +47,16 @@ class AtlassianMCPServer:
     async def get_tools(self) -> List[Any]:
         """Get list of registered tools."""
         return list((await self.mcp_server.get_tools()).values())
+
+    async def _get_auth_manager(self) -> AtlassianAuthManager:
+        """Get authenticated auth manager or raise helpful exception."""
+        if not self.config:
+            config_result = AtlassianConfig.from_environment_safe()
+            if config_result.is_failure():
+                raise ValueError(f"Configuration error: {config_result.error}")
+            self.config = config_result.unwrap()
+
+        if not self.auth_manager:
+            self.auth_manager = AtlassianAuthManager(self.config)
+
+        return self.auth_manager

@@ -1,7 +1,7 @@
 """Tests for MCP Server functionality."""
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 
 @pytest.mark.asyncio
@@ -18,8 +18,11 @@ async def test_server_can_be_created():
 async def test_server_start_stop():
     """Test server start and stop functionality."""
     from mcp_server_atlassian.server import AtlassianMCPServer
+    from mcp_server_atlassian.config import AtlassianConfig
 
     server = AtlassianMCPServer()
+    # Set config before starting
+    server.config = AtlassianConfig(url="https://test.atlassian.net")
 
     await server.start()
     assert server.is_running
@@ -32,12 +35,14 @@ async def test_server_start_stop():
 async def test_auth_manager_creation():
     """Test auth manager creation in server."""
     from mcp_server_atlassian.server import AtlassianMCPServer
+    from mcp_server_atlassian.config import AtlassianConfig
+    from mcp_server_atlassian.result import Result
 
     server = AtlassianMCPServer()
+    mock_config = AtlassianConfig(url="https://test.atlassian.net")
+    mock_result = Result.ok(mock_config)
 
-    with patch("mcp_server_atlassian.server.AtlassianConfig") as mock_config:
-        mock_config.from_environment.return_value = MagicMock(url="https://test.atlassian.net")
-
+    with patch("mcp_server_atlassian.server.AtlassianConfig.from_environment_safe", return_value=mock_result):
         auth_manager = await server._get_auth_manager()
 
         assert auth_manager is not None
