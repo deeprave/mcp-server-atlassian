@@ -6,6 +6,9 @@ from fastmcp import FastMCP
 from .config import AtlassianConfig
 from .auth import AtlassianAuthManager
 from .tools import register_tools
+from .mcp_log import get_logger
+
+logger = get_logger(__name__)
 
 
 class AtlassianMCPServer:
@@ -17,26 +20,33 @@ class AtlassianMCPServer:
         self.mcp_server = FastMCP("Atlassian MCP Server")
         self.config: Optional[AtlassianConfig] = None
         self.auth_manager: Optional[AtlassianAuthManager] = None
+        logger.debug("AtlassianMCPServer initialized")
 
     async def start(self) -> None:
         """Start the MCP server."""
+        logger.info("Starting Atlassian MCP Server")
+
         # Register tools with configuration (or default config if None)
         if self.config:
+            logger.debug(f"Registering tools with config: {self.config.url}")
             await register_tools(self.mcp_server, self.config)
         else:
             # Use default config for tool registration when config is missing
             from .config import AtlassianConfig
 
             default_config = AtlassianConfig(url="https://example.atlassian.net")
+            logger.warning("No config provided, using default config for tool registration")
             await register_tools(self.mcp_server, default_config)
 
         # Store reference to this server instance for error checking
         self.mcp_server._atlassian_server = self  # type: ignore
 
         self._running = True
+        logger.info("Atlassian MCP Server started successfully")
 
     async def stop(self) -> None:
         """Stop the MCP server."""
+        logger.info("Stopping Atlassian MCP Server")
         self._running = False
 
     @property

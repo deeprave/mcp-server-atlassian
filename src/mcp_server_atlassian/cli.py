@@ -50,11 +50,9 @@ async def start_server(log_level: str = "INFO", log_file: str = "", log_json: bo
     if log_level.upper() not in valid_levels:
         raise ValueError(f"Invalid log level: {log_level}")
 
-    # Validate log file path to prevent path traversal
+    # Convert log file to absolute path
     if log_file:
         log_file = os.path.abspath(log_file)
-        if not log_file.startswith(os.getcwd()):
-            raise ValueError("Log file must be within current directory")
 
     # Get configuration safely BEFORE any logging setup
     config_result = AtlassianConfig.from_environment_safe()

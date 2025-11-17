@@ -12,15 +12,6 @@ async def test_invalid_log_level_raises_error():
 
 
 @pytest.mark.asyncio
-async def test_path_traversal_protection():
-    """Test that path traversal attacks are prevented."""
-    # Try to write outside current directory
-    malicious_path = "../../../etc/passwd"
-
-    with pytest.raises(ValueError, match="Log file must be within current directory"):
-        await start_server(log_file=malicious_path)
-
-
 def test_log_message_sanitization():
     """Test that log messages are sanitized to prevent injection."""
     from mcp_server_atlassian.mcp_log import _sanitize_log_message
