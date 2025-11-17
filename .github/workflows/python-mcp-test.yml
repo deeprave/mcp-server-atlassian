@@ -33,6 +33,7 @@ jobs:
       run: uv run pytest -v -Walways
       env:
         NO_COLOR: "1"
+        TERM: "dumb"
 
     - name: Lint with ruff
       run: uv run ruff check
