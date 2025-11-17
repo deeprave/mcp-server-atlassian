@@ -11,7 +11,6 @@ async def test_invalid_log_level_raises_error():
         await start_server(log_level="INVALID")
 
 
-@pytest.mark.asyncio
 def test_log_message_sanitization():
     """Test that log messages are sanitized to prevent injection."""
     from mcp_server_atlassian.mcp_log import _sanitize_log_message
