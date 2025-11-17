@@ -51,6 +51,7 @@ line-length = 120
 python_version = "3.13"
 packages = ["mcp_server_atlassian"]
 mypy_path = "src"
+explicit_package_bases = true
 strict = true
 
 [dependency-groups]
